@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util https://www.springframework.org/schema/util/spring-util.xsd">
+
+    <!-- 实验一 [重要]创建bean -->
+    <bean id="happyComponent" class="ioc.component.HappyComponent"/>
+
+    <!-- 实验三 [重要]给bean的属性赋值：setter注入 -->
+    <bean id="happyComponent3" class="ioc.component.HappyComponent">
+        <!-- property标签：通过组件类的setXxx()方法给组件对象设置属性 -->
+        <!-- name属性：指定属性名（这个属性名是getXxx()、setXxx()方法定义的，和成员变量无关） -->
+        <!-- value属性：指定属性值 -->
+        <property name="componentName" value="veryHappy"/>
+    </bean>
+
+    <!-- 实验四 [重要]给bean的属性赋值：引用外部已声明的bean -->
+    <bean id="happyMachine" class="ioc.component.HappyMachine">
+        <property name="machineName" value="makeHappy" />
+    </bean>
+    <bean id="happyComponent4" class="ioc.component.HappyComponent">
+        <!-- ref 属性：通过 bean 的 id 引用另一个 bean -->
+        <property name="happyMachine" ref="happyMachine" />
+    </bean>
+
+    <!-- 实验五 [重要]给bean的属性赋值：内部bean -->
+    <bean id="happyComponent5" class="ioc.component.HappyComponent">
+        <property name="happyMachine">
+            <!-- 在一个 bean 中再声明一个 bean 就是内部 bean -->
+            <!-- 内部 bean 可以直接用于给属性赋值，可以省略 id 属性 -->
+            <bean class="ioc.component.HappyMachine">
+                <property name="machineName" value="makeHappy"/>
+            </bean>
+        </property>
+    </bean>
+
+    <!-- 引入外部属性文件 -->
+    <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="locations" value="jdbc.properties"/>
+    </bean>
+
+    <!-- 实验六 [重要]给bean的属性赋值：引入外部属性文件 -->
+    <bean id="druidDataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+
+
+    <bean id="happyMachine2" class="ioc.component.HappyMachine" />
+
+    <!-- 实验七 给bean的属性赋值：级联属性赋值 -->
+    <bean id="happyComponent6" class="ioc.component.HappyComponent">
+        <!-- 装配关联对象 -->
+        <property name="happyMachine" ref="happyMachine2"/>
+        <!-- 对HappyComponent来说，happyMachine的machineName属性就是级联属性 -->
+        <property name="happyMachine.machineName" value="cascadeValue"/>
+    </bean>
+
+    <!-- 实验八 给bean的属性赋值：构造器注入 -->
+    <bean id="happyTeam" class="ioc.component.HappyTeam">
+        <constructor-arg value="happyCorps"/>
+        <constructor-arg value="10"/>
+        <constructor-arg value="1000.55"/>
+    </bean>
+
+    <!-- 实验九 给bean的属性赋值：特殊值处理 -->
+    <bean id="propValue" class="ioc.component.PropValue">
+        <!-- 小于号在XML文档中用来定义标签的开始，不能随便使用 -->
+        <!-- 解决方案一：使用XML实体来代替 -->
+        <property name="expression">
+            <value><![CDATA[a < b]]></value>
+        </property>
+    </bean>
+
+    <!-- 实验十 给bean的属性赋值：使用p名称空间 -->
+    <bean id="happyMachine3"
+          class="ioc.component.HappyMachine"
+          p:machineName="goodMachine"
+    />
+
+    <!-- 实验十一 集合类型的bean -->
+    <bean id="happyTeam2" class="ioc.component.HappyTeam">
+        <property name="memberList">
+            <list>
+                <value>member01</value>
+                <value>member02</value>
+                <value>member03</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 实验十二 自动装配 -->
+    <bean id="happyService3" class="ioc.component.HappyService"/>
+    <bean id="happyService2" class="ioc.component.HappyService"/>
+
+    <!-- 使用bean标签的autowire属性设置自动装配效果 -->
+    <!-- byType表示根据类型进行装配，此时如果类型匹配的bean不止一个，那么会抛NoUniqueBeanDefinitionException -->
+    <!-- byName表示根据bean的id进行匹配。而bean的id是根据需要装配组件的属性的属性名来确定的 -->
+    <bean id="happyController"
+          class="ioc.component.HappyController"
+          autowire="byName"
+    >
+        <!-- 手动装配：在property标签中使用ref属性明确指定要装配的bean -->
+        <!--<property name="happyService" ref="happyService"/>-->
+    </bean>
+
+    <!-- 实验十三 给bean的属性赋值：集合属性 -->
+    <util:list id="machineList">
+        <bean class="ioc.component.HappyMachine">
+            <property name="machineName" value="machineOne"/>
+        </bean>
+        <bean class="ioc.component.HappyMachine">
+            <property name="machineName" value="machineTwo"/>
+        </bean>
+        <bean class="ioc.component.HappyMachine">
+            <property name="machineName" value="machineThree"/>
+        </bean>
+    </util:list>
+
+    <!-- 实验十四 FactoryBean机制 -->
+    <!-- 这个bean标签中class属性指定的是HappyFactoryBean，但是将来从这里获取的bean是HappyMachine对象 -->
+    <bean id="happyMachine4" class="ioc.factory.HappyFactoryBean">
+        <!-- property标签仍然可以用来通过setXxx()方法给属性赋值 -->
+        <property name="machineName" value="iceCreamMachine"/>
+    </bean>
+
+    <!-- 实验十五 bean的作用域 -->
+    <!-- scope属性：取值singleton（默认值），bean在IOC容器中只有一个实例，IOC容器初始化时创建对象 -->
+    <!-- scope属性：取值prototype，bean在IOC容器中可以有多个实例，getBean()时创建对象 -->
+    <bean id="happyMachine5" scope="prototype" class="ioc.component.HappyMachine">
+        <property name="machineName" value="iceCreamMachine"/>
+    </bean>
+
+    <!-- 实验十六 bean的生命周期 -->
+    <!-- 使用init-method属性指定初始化方法 -->
+    <!-- 使用destroy-method属性指定销毁方法 -->
+    <bean id="happyComponent7"
+          class="ioc.component.HappyComponent"
+          init-method="happyInitMethod"
+          destroy-method="happyDestroyMethod"
+    >
+        <property name="componentName" value="uuu"/>
+    </bean>
+
+    <!-- bean的后置处理器要放入IOC容器才能生效 -->
+    <bean id="happyBeanProcessor" class="ioc.process.HappyBeanProcessor"/>
+
+
+</beans>
